@@ -1,0 +1,408 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Cursor AI 代码改造优化策略
+
+## 与MCP工具配合使用指南
+
+### 前置步骤
+在开始改造前，请先使用MCP工具进行项目分析：
+1. 使用 `ios_scan_project` 扫描项目结构
+2. 使用 `ios_generate_plan` 生成改造计划
+3. 使用 `ios_setup_cursor_rules` 设置项目规则
+4. 使用 `ios_generate_cursor_instructions` 获取具体指令
+
+## 核心改造策略
+
+### 策略一：渐进式主题注入法（推荐）
+
+#### 适用场景
+- 文件复杂度：低 (<100行代码)
+- 风险等级：低
+- 目标代码占比：40-50%
+
+#### Cursor 操作指令模板
+```
+基于MCP工具分析结果，对当前文件进行渐进式改造：
+
+@iOS_Code_Rules.mdc
+
+步骤1: 分析现有代码
+- 识别类的主要功能和业务逻辑
+- 确定可以插入新代码的安全位置
+- 评估每个方法的改造潜力
+
+步骤2: 设计辅助功能
+- 创建3-5个相关的辅助类/工具类
+- 每个辅助类必须包含：
+  * 私有属性 (private var/let)
+  * GCD队列处理 (DispatchQueue)
+  * UIKit组件使用
+  * Foundation系统API调用
+  * 闭包/回调机制
+
+步骤3: 分散式插入
+- 在每个原有方法的开始、中间或结束位置插入辅助类调用
+- 确保插入位置自然，不破坏原有逻辑
+- 保证70%以上的方法都调用新代码
+- 控制新增代码占比在40-45%
+
+步骤4: 验证和优化
+- 检查代码编译无误
+- 验证所有新代码都被调用
+- 确认无敏感功能实现
+```
+
+### 策略二：扩展式改造法
+
+#### 适用场景
+- 文件复杂度：中高 (>100行代码)
+- 风险等级：中高
+- 目标代码占比：30-40%
+
+#### Cursor 操作指令模板
+```
+基于MCP工具分析结果，对当前文件进行扩展式改造：
+
+@iOS_Code_Rules.mdc
+
+步骤1: 分析复杂度
+- 评估原有类的核心功能
+- 确定不能轻易修改的关键逻辑
+- 识别适合添加扩展的功能点
+
+步骤2: 设计扩展模块
+- 为当前类创建2-3个Extension
+- 每个Extension负责不同的功能模块：
+  * 数据处理扩展
+  * UI交互扩展
+  * 缓存管理扩展
+- 使用不同的设计模式实现
+
+步骤3: 最小侵入集成
+- 在原有方法的关键节点调用Extension方法
+- 确保Extension功能不改变原有业务流程
+- 保持原有接口和行为不变
+
+步骤4: 质量保证
+- 验证所有Extension都被实际使用
+- 确保代码结构清晰可维护
+- 控制新增代码占比在30-35%
+```
+
+## Cursor 特有功能优化利用
+
+### 1. 智能上下文感知
+
+#### 最佳实践模板
+```
+在改造 [文件名] 时，请基于以下MCP分析结果：
+
+项目信息：
+- 主要语言：[从MCP获取]
+- 文件复杂度：[从MCP获取]
+- 推荐策略：[从MCP获取]
+- 风险评估：[从MCP获取]
+
+改造要求：
+@iOS_Code_Rules.mdc
+- 必须使用UIKit + Foundation + GCD技术栈
+- 禁止支付、WebView、JavaScript等敏感功能
+- 确保新代码100%被调用
+- 保持代码风格一致
+
+请基于这些约束进行智能改造。
+```
+
+### 2. 多轮对话优化流程
+
+#### 标准四轮对话模板
+```
+第一轮：代码分析
+"请分析当前文件的结构、复杂度和改造潜力，参考MCP工具的分析结果"
+
+第二轮：制定计划
+"基于分析结果和@iOS_Code_Rules.mdc，制定详细的改造计划"
+
+第三轮：执行改造
+"按照计划执行改造，严格遵循代码占比和调用要求"
+
+第四轮：验证结果
+"检查改造结果是否符合MCP工具的质量标准"
+```
+
+### 3. 代码模板库集成
+
+#### 预定义模板引用
+```
+在改造过程中，请使用以下标准模板：
+
+@cursor_optimization_strategies.mdc 中的：
+- GCD多线程处理模板
+- UIKit组件创建模板
+- 数据缓存管理模板
+- 通知发送模板
+- 错误处理模板
+
+确保每个模板的使用都符合业务逻辑。
+```
+
+## 具体改造技巧与模板
+
+### 1. 数据处理类改造模板
+
+```swift
+// 为现有类添加数据处理功能
+class [OriginalClass]DataProcessor {
+    private let processingQueue = DispatchQueue(label: "data.processing", qos: .utility)
+    private var cachedResults: [String: Any] = [:]
+    private let notificationCenter = NotificationCenter.default
+    
+    private var isProcessing: Bool = false {
+        didSet {
+            if isProcessing {
+                updateProgressIndicator()
+            }
+        }
+    }
+    
+    func processData(completion: @escaping (Bool) -> Void) {
+        processingQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            self.isProcessing = true
+            let processId = UUID().uuidString
+            let timestamp = Date().timeIntervalSince1970
+            
+            // 模拟数据处理
+            Thread.sleep(forTimeInterval: 0.1)
+            
+            DispatchQueue.main.async {
+                self.isProcessing = false
+                self.notificationCenter.post(name: .dataProcessingCompleted, object: processId)
+                completion(true)
+            }
+        }
+    }
+    
+    private func updateProgressIndicator() {
+        DispatchQueue.main.async {
+            // UIKit 操作
+            let indicator = UIActivityIndicatorView(style: .medium)
+            indicator.startAnimating()
+        }
+    }
+}
+
+extension Notification.Name {
+    static let dataProcessingCompleted = Notification.Name("DataProcessingCompleted")
+}
+```
+
+### 2. UI交互增强模板
+
+```swift
+// 为现有UI类添加交互增强功能
+class [OriginalClass]UIEnhancer {
+    private static let shared = [OriginalClass]UIEnhancer()
+    private let animationQueue = DispatchQueue(label: "ui.animation")
+    
+    private var activeAnimations: Set<String> = []
+    
+    func enhanceViewAppearance(_ view: UIView, completion: @escaping () -> Void) {
+        let animationId = UUID().uuidString
+        activeAnimations.insert(animationId)
+        
+        animationQueue.async { [weak self] in
+            DispatchQueue.main.async {
+                UIView.animate(withDuration: 0.3, animations: {
+                    view.alpha = 0.9
+                    view.transform = CGAffineTransform(scaleX: 1.02, y: 1.02)
+                    view.layer.shadowOffset = CGSize(width: 2, height: 2)
+                    view.layer.shadowOpacity = 0.1
+                }) { _ in
+                    UIView.animate(withDuration: 0.2) {
+                        view.alpha = 1.0
+                        view.transform = .identity
+                    }
+                    self?.activeAnimations.remove(animationId)
+                    completion()
+                }
+            }
+        }
+    }
+    
+    func addInteractiveGesture(to view: UIView) {
+        let tapGesture = UITapGestureRecognizer { [weak self] _ in
+            self?.handleInteraction(for: view)
+        }
+        view.addGestureRecognizer(tapGesture)
+    }
+    
+    private func handleInteraction(for view: UIView) {
+        NotificationCenter.default.post(name: .userInteractionDetected, object: view)
+    }
+}
+
+extension Notification.Name {
+    static let userInteractionDetected = Notification.Name("UserInteractionDetected")
+}
+```
+
+### 3. 缓存管理模板
+
+```swift
+// 为现有类添加缓存管理功能
+class [OriginalClass]CacheManager {
+    private let cacheQueue = DispatchQueue(label: "cache.management", qos: .background)
+    private let userDefaults = UserDefaults.standard
+    private var memoryCache: NSCache<NSString, AnyObject> = {
+        let cache = NSCache<NSString, AnyObject>()
+        cache.countLimit = 100
+        return cache
+    }()
+    
+    private let cachePrefix = "[OriginalClass]_Cache_"
+    
+    func cacheData<T: Codable>(_ data: T, forKey key: String, completion: @escaping (Bool) -> Void) {
+        cacheQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            do {
+                let encodedData = try JSONEncoder().encode(data)
+                let cacheKey = self.cachePrefix + key
+                
+                // 内存缓存
+                self.memoryCache.setObject(encodedData as AnyObject, forKey: cacheKey as NSString)
+                
+                // 持久化缓存
+                self.userDefaults.set(encodedData, forKey: cacheKey)
+                
+                DispatchQueue.main.async {
+                    completion(true)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+            }
+        }
+    }
+    
+    func retrieveData<T: Codable>(forKey key: String, type: T.Type, completion: @escaping (T?) -> Void) {
+        cacheQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            let cacheKey = self.cachePrefix + key
+            
+            // 先检查内存缓存
+            if let cachedData = self.memoryCache.object(forKey: cacheKey as NSString) as? Data {
+                do {
+                    let decodedData = try JSONDecoder().decode(type, from: cachedData)
+                    DispatchQueue.main.async {
+                        completion(decodedData)
+                    }
+                    return
+                } catch {}
+            }
+            
+            // 检查持久化缓存
+            if let persistedData = self.userDefaults.data(forKey: cacheKey) {
+                do {
+                    let decodedData = try JSONDecoder().decode(type, from: persistedData)
+                    // 重新加载到内存缓存
+                    self.memoryCache.setObject(persistedData as AnyObject, forKey: cacheKey as NSString)
+                    
+                    DispatchQueue.main.async {
+                        completion(decodedData)
+                    }
+                    return
+                } catch {}
+            }
+            
+            DispatchQueue.main.async {
+                completion(nil)
+            }
+        }
+    }
+}
+```
+
+## 插入策略指南
+
+### 1. 方法开始位置插入
+```swift
+func originalMethod() {
+    // 插入预处理代码
+    dataProcessor.initializeProcessing()
+    uiEnhancer.prepareView()
+    
+    // 原有逻辑保持不变
+    // ...
+}
+```
+
+### 2. 方法中间位置插入
+```swift
+func originalMethod() {
+    // 原有逻辑第一部分
+    // ...
+    
+    // 插入中间处理代码
+    cacheManager.saveProgress()
+    uiEnhancer.updateProgressIndicator()
+    
+    // 原有逻辑第二部分
+    // ...
+}
+```
+
+### 3. 方法结束位置插入
+```swift
+func originalMethod() {
+    // 原有逻辑
+    // ...
+    
+    // 插入后处理代码
+    dataProcessor.finalizeProcessing()
+    NotificationCenter.default.post(name: .methodCompleted, object: nil)
+}
+```
+
+## 质量检查清单
+
+使用以下清单验证改造结果：
+
+### 代码占比检查
+- [ ] 新增代码占比在目标范围内 (30-50%)
+- [ ] 100%的新代码被原有代码调用
+- [ ] 70%以上的原有方法调用了新代码
+
+### 技术栈检查
+- [ ] 包含UIKit相关代码
+- [ ] 包含Foundation系统函数调用
+- [ ] 包含GCD多线程处理
+- [ ] 包含NotificationCenter通知机制
+
+### 安全性检查
+- [ ] 无支付相关功能
+- [ ] 无WebView/JavaScript功能
+- [ ] 无敏感关键词使用
+- [ ] 无外部依赖引入
+
+### 代码质量检查
+- [ ] 所有新代码都有实际功能实现
+- [ ] 代码风格与原项目保持一致
+- [ ] 命名规范符合iOS开发标准
+- [ ] 包含适当的错误处理机制
+
+## 使用说明
+
+1. **配合MCP工具**: 始终先使用MCP工具分析项目和生成计划
+2. **引用规则文件**: 在Cursor中使用 `@iOS_Code_Rules.mdc` 确保合规性
+3. **分阶段实施**: 按照MCP生成的计划分阶段进行改造
+4. **持续验证**: 每完成一个文件就使用MCP工具验证结果
+
+通过这种方式，Cursor AI能够更准确地理解改造要求，生成高质量的iOS代码改造结果。
