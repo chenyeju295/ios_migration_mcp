@@ -67,48 +67,13 @@ ios_get_progress_statistics(project_path) - 查看整体统计
 - 禁止重复模板或雷同实现
 - 使用不同的设计模式和实现方式
 
-### 必需成员类型
-每个类/结构体/扩展/类目必须包含以下成员类型（可组合）：
+### 成员类型
+每个类/结构体/扩展/类目可以包含以下成员类型（可组合）：
 - **保护属性**：private/protected
 - **变量**：var/let
 - **常量**：let/static let
 - **类方法**：static/class func
 - **实例方法**：func
-
-### 强制技术栈要求
-每个类/结构体/扩展/类目中，必须包含：
-
-#### GCD使用（必需）
-至少包含一次 Grand Central Dispatch 相关的代码：
-```swift
-private let processingQueue = DispatchQueue(label: "processing", qos: .utility)
-```
-
-#### UIKit使用（必需）
-至少包含一次 UIKit 相关的代码：
-```swift
-private func updateUI() {
-    let view = UIView()
-    view.backgroundColor = UIColor.systemBlue
-}
-```
-
-#### 系统函数调用（必需）
-至少包含一次系统函数调用：
-```swift
-let timestamp = Date().timeIntervalSince1970
-let uuid = UUID().uuidString
-NotificationCenter.default.post(name: .customNotification, object: nil)
-```
-
-#### 闭包/回调（必需）
-至少包含一个闭包属性或方法参数，并有实际调用：
-```swift
-func processData(completion: @escaping (Bool) -> Void) {
-    // 实际处理
-    completion(true)
-}
-```
 
 ### 代码质量要求
 
@@ -134,11 +99,6 @@ func processData(completion: @escaping (Bool) -> Void) {
 - **外部依赖**：禁止自动生成依赖外部库或服务的代码，除非目标项目已明确集成
 - **死代码**：禁止生成未被调用、未被引用的死代码
 
-### 禁止敏感词
-严禁在代码中使用以下敏感词：
-- Review, WebView, js, Pay, In-app, purchase
-- payment, billing, transaction, checkout
-- dating, match, chat, message, social
 
 ## MCP工具集成工作流
 

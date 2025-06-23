@@ -107,6 +107,37 @@ ios_evaluate_project_quality("/path/to/project")
 - 包含项目统计信息和技术栈建议
 - MCP工具集成命令说明
 
+### 4. `iOS_Migration_Quick_Commands.mdc`
+**Cursor IDE快速命令规则**
+- 自动识别用户改造意图
+- 执行相应的MCP工具调用
+- 智能选择改造策略
+- 错误处理和质量检查
+
+## 📝 提示词指南文档
+
+### 🔸 详细指南：`iOS_Migration_Prompts_Guide.md`
+**完整的提示词使用手册**
+- 新项目开始的标准提示词
+- 按文件大小分类的改造模板
+- MCP工具完整调用流程
+- 特殊情况处理（敏感文件、UI控制器）
+- 质量验证和合规性检查
+- 故障排除和最佳实践
+
+### 🔸 快速参考：`Quick_Start_Prompts.md`
+**即用的提示词卡片**
+- 复制粘贴即用的命令模板
+- 常用改造场景提示词
+- MCP工具快速调用指令
+- 质量检查清单
+- 故障排除速查表
+
+### 💡 使用建议
+1. **新手用户**：先阅读 `iOS_Migration_Prompts_Guide.md` 了解完整流程
+2. **熟练用户**：直接使用 `Quick_Start_Prompts.md` 快速开始
+3. **Cursor用户**：配合 `@iOS_Migration_Quick_Commands.mdc` 实现智能识别
+
 ## 🎯 核心改造原则
 
 ### 功能逻辑不变
