@@ -85,6 +85,7 @@ def _initialize_progress_tracking(scan_result: Dict) -> Dict[str, Any]:
 def ios_setup_cursor_rules(
     project_path: str,
     cursor_project_root: str,
+    app_theme: str = "",
     include_optimization_strategies: bool = True,
     include_code_creation_rules: bool = True
 ) -> str:
@@ -94,6 +95,7 @@ def ios_setup_cursor_rules(
     Args:
         project_path: 目标iOS项目路径（用于生成规则内容）
         cursor_project_root: 当前Cursor项目根目录绝对路径
+        app_theme: App项目主题
         include_optimization_strategies: 是否包含优化策略规则
         include_code_creation_rules: 是否包含代码创建规则
     
@@ -136,8 +138,8 @@ def ios_setup_cursor_rules(
                 shutil.copy2(source_file, dest_file)
                 injected_files.append("creater_new_code_file.mdc")
         
-        # 动态生成iOS代码规范文件（基于目标项目信息）
-        ios_rules_content = _generate_ios_rules(project_path)
+        # 动态生成iOS代码规范文件（基于目标项目信息和主题）
+        ios_rules_content = _generate_ios_rules(project_path, app_theme)
         ios_rules_file = os.path.join(cursor_rules_dir, "iOS_Code_Rules.mdc")
         with open(ios_rules_file, 'w', encoding='utf-8') as f:
             f.write(ios_rules_content)
@@ -150,9 +152,10 @@ def ios_setup_cursor_rules(
             "target_project_path": project_path,
             "cursor_project_root": cursor_project_root,
             "cursor_rules_directory": cursor_rules_dir,
+            "app_theme": app_theme if app_theme else "未指定",
             "injected_files": injected_files,
             "total_files": len(injected_files),
-            "note": "Cursor规则文件已成功注入到指定的Cursor项目根目录"
+            "note": f"Cursor规则文件已成功注入到指定的Cursor项目根目录{f'，应用主题：{app_theme}' if app_theme else ''}"
         }
         
         record_file = os.path.join(record_dir, "cursor_rules_injection.json")
@@ -165,6 +168,7 @@ def ios_setup_cursor_rules(
             "target_project_path": project_path,
             "cursor_project_root": cursor_project_root,
             "cursor_rules_directory": cursor_rules_dir,
+            "app_theme": app_theme if app_theme else "未指定",
             "injected_files": injected_files,
             "total_files": len(injected_files),
             "record_file": record_file,
@@ -177,6 +181,7 @@ def ios_setup_cursor_rules(
                 "在Cursor中使用 @cursor_optimization_strategies.mdc 获取改造策略",
                 "使用 @creater_new_code_file.mdc 指导代码创建",
                 "使用 @iOS_Code_Rules.mdc 确保代码规范",
+                f"代码生成时围绕'{app_theme}'主题进行设计" if app_theme else "代码生成时根据项目特点进行设计",
                 "完成文件改造后调用 ios_update_progress 更新进度"
             ]
         }
@@ -477,8 +482,8 @@ def _create_record_directory(project_path: str) -> str:
     
     return record_dir
 
-def _generate_ios_rules(project_path: str) -> str:
-    """动态生成iOS代码规范文件内容"""
+def _generate_ios_rules(project_path: str, app_theme: str = "") -> str:
+    """动态生成iOS代码规范文件内容，结合App主题生成相关规则"""
     try:
         # 尝试扫描项目获取信息
         scan_result = project_scanner.scan_project(project_path, False)
@@ -497,6 +502,21 @@ def _generate_ios_rules(project_path: str) -> str:
         objc_files = 0
         total_lines = 0
     
+    # 生成主题提示
+    theme_guidance = ""
+    if app_theme:
+        theme_guidance = f"""
+## 主题导向改造指引
+
+**应用主题**: {app_theme}
+
+**代码生成要求**:
+- 所有新增代码应围绕"{app_theme}"主题进行设计
+- 新增功能、类名、方法名应与{app_theme}主题相关
+- 生成的业务逻辑应符合{app_theme}应用的特点
+- 确保新代码与{app_theme}主题的整体性和一致性
+"""
+
     content = f"""# iOS 代码改造规范
 
 ## 项目基本信息
@@ -504,7 +524,8 @@ def _generate_ios_rules(project_path: str) -> str:
 - Swift文件数: {swift_files}
 - Objective-C文件数: {objc_files}
 - 总代码行数: {total_lines}
-
+- 应用主题: {app_theme if app_theme else "未指定"}
+{theme_guidance}
 ## 核心改造原则
 
 ### 1. 功能逻辑不变原则
