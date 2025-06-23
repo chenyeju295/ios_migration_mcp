@@ -5,15 +5,14 @@
 ### 1️⃣ 项目初始化
 ```
 请使用MCP工具扫描我的iOS项目：
+目标目录：/Users/chenyeju/Documents/***
+主题：******
+请按照以下步骤执行：
+1. 使用 ios_scan_project 扫描 project_path：/Users/chenyeju/Documents/***
+2. 使用 ios_setup_cursor_rules 注入Cursor规则文件
+3. 分析扫描结果，给出改造建议
 
-项目路径：/Users/[username]/[ProjectName]
-
-执行步骤：
-1. ios_scan_project - 扫描项目结构  
-2. ios_setup_cursor_rules - 注入Cursor规则
-3. 分析结果并给出改造建议
-
-立即开始执行。
+开始执行MCP工具调用。
 ```
 
 ### 2️⃣ 开始改造文件

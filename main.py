@@ -484,23 +484,6 @@ def _create_record_directory(project_path: str) -> str:
 
 def _generate_ios_rules(project_path: str, app_theme: str = "") -> str:
     """动态生成iOS代码规范文件内容，结合App主题生成相关规则"""
-    try:
-        # 尝试扫描项目获取信息
-        scan_result = project_scanner.scan_project(project_path, False)
-        project_stats = scan_result.get('project_stats', {})
-        
-        swift_files = project_stats.get('swift_files', 0)
-        objc_files = project_stats.get('objective_c_files', 0)
-        total_lines = project_stats.get('total_lines', 0)
-        
-        # 确定主要语言
-        primary_language = "Swift" if swift_files >= objc_files else "Objective-C"
-        
-    except:
-        primary_language = "Swift"
-        swift_files = 0
-        objc_files = 0
-        total_lines = 0
     
     # 生成主题提示
     theme_guidance = ""
@@ -512,18 +495,14 @@ def _generate_ios_rules(project_path: str, app_theme: str = "") -> str:
 
 **代码生成要求**:
 - 所有新增代码应围绕"{app_theme}"主题进行设计
-- 新增功能、类名、方法名应与{app_theme}主题相关
-- 生成的业务逻辑应符合{app_theme}应用的特点
-- 确保新代码与{app_theme}主题的整体性和一致性
+- 新增功能、类名、方法名应与主题相关
+- 生成的业务逻辑应符合应用的特点
+- 确保新代码与主题的整体性和一致性
 """
 
     content = f"""# iOS 代码改造规范
 
 ## 项目基本信息
-- 主要语言: {primary_language}
-- Swift文件数: {swift_files}
-- Objective-C文件数: {objc_files}
-- 总代码行数: {total_lines}
 - 应用主题: {app_theme if app_theme else "未指定"}
 {theme_guidance}
 ## 核心改造原则
