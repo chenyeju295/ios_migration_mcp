@@ -28,14 +28,14 @@ def ios_scan_project(
     include_tests: bool = False
 ) -> str:
     """
-    扫描分析iOS项目代码结构，详细记录类和方法信息
+    扫描iOS项目，返回简单的文件列表
     
     Args:
         project_path: iOS项目根目录路径
         include_tests: 是否包含测试文件
     
     Returns:
-        JSON格式的项目扫描结果，包含详细的文件、类、方法分析
+        JSON格式的项目扫描结果
     """
     try:
         # 创建记录目录
@@ -44,20 +44,10 @@ def ios_scan_project(
         # 扫描项目
         scan_result = project_scanner.scan_project(project_path, include_tests)
         
-        # 详细分析每个文件的类和方法
-        detailed_analysis = _analyze_files_in_detail(scan_result.get('files', []))
-        scan_result['detailed_analysis'] = detailed_analysis
+        # 初始化进度跟踪
+        progress_data = _initialize_progress_tracking(scan_result)
         
-        # 创建简化的进度跟踪
-        progress_data = _initialize_simple_progress_tracking(scan_result)
-        
-        # 保存扫描记录
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        record_file = os.path.join(record_dir, f"scan_result_{timestamp}.json")
-        with open(record_file, 'w', encoding='utf-8') as f:
-            json.dump(scan_result, f, indent=2, ensure_ascii=False)
-        
-        # 保存进度跟踪文件
+        # 保存进度跟踪文件（统一命名，覆盖旧文件）
         progress_file = os.path.join(record_dir, "transformation_progress.json")
         with open(progress_file, 'w', encoding='utf-8') as f:
             json.dump(progress_data, f, indent=2, ensure_ascii=False)
@@ -65,86 +55,28 @@ def ios_scan_project(
         # 添加记录信息到结果
         scan_result['record_info'] = {
             'record_directory': record_dir,
-            'scan_record_file': record_file,
             'progress_file': progress_file,
-            'timestamp': timestamp
+            'timestamp': datetime.now().strftime("%Y%m%d_%H%M%S")
         }
         
         return json.dumps(scan_result, indent=2, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
-def _analyze_files_in_detail(files: List[Dict]) -> Dict[str, Any]:
-    """详细分析文件中的类和方法信息"""
-    detailed_analysis = {
-        "total_files": len(files),
-        "total_classes": 0,
-        "total_methods": 0,
-        "total_properties": 0,
-        "files_by_complexity": {"low": 0, "medium": 0, "high": 0},
-        "framework_usage": {"UIKit": 0, "Foundation": 0, "GCD": 0},
-        "files_detail": []
-    }
-    
-    for file_info in files:
-        analysis = file_info.get('analysis', {})
-        
-        # 统计类和方法数量
-        classes = analysis.get('classes', [])
-        methods = analysis.get('methods', [])
-        properties = analysis.get('properties', [])
-        
-        detailed_analysis["total_classes"] += len(classes)
-        detailed_analysis["total_methods"] += len(methods)
-        detailed_analysis["total_properties"] += len(properties)
-        
-        # 统计复杂度分布
-        complexity = file_info.get('complexity', 'low')
-        detailed_analysis["files_by_complexity"][complexity] += 1
-        
-        # 统计框架使用
-        if analysis.get('has_uikit'):
-            detailed_analysis["framework_usage"]["UIKit"] += 1
-        if analysis.get('has_foundation'):
-            detailed_analysis["framework_usage"]["Foundation"] += 1
-        if analysis.get('has_gcd'):
-            detailed_analysis["framework_usage"]["GCD"] += 1
-        
-        # 详细记录文件信息
-        file_detail = {
-            "file_path": file_info.get('path'),
-            "complexity": complexity,
-            "classes": classes,
-            "methods": methods,
-            "properties": properties,
-            "line_count": analysis.get('line_count', 0),
-            "imports": analysis.get('imports', []),
-            "framework_usage": {
-                "UIKit": analysis.get('has_uikit', False),
-                "Foundation": analysis.get('has_foundation', False),
-                "GCD": analysis.get('has_gcd', False)
-            }
-        }
-        detailed_analysis["files_detail"].append(file_detail)
-    
-    return detailed_analysis
-
-def _initialize_simple_progress_tracking(scan_result: Dict) -> Dict[str, Any]:
+def _initialize_progress_tracking(scan_result: Dict) -> Dict[str, Any]:
     """初始化简化的改造进度跟踪数据"""
     files = scan_result.get('files', [])
     
     progress_data = {
         "project_info": {
             "total_files": len(files),
-            "scan_timestamp": datetime.now().isoformat(),
-            "project_stats": scan_result.get('project_stats', {})
+            "scan_timestamp": datetime.now().isoformat()
         },
         "transformation_progress": {
-            "not_started": len(files),
-            "in_progress": 0,
-            "completed": 0
+            "completed": [],
+            "not_started": [file_info.get('path') for file_info in files]
         },
-        "files_list": [file_info.get('path') for file_info in files]
+        "update_history": []
     }
     
     return progress_data
@@ -211,10 +143,9 @@ def ios_setup_cursor_rules(
             f.write(ios_rules_content)
         injected_files.append("iOS_Code_Rules.mdc")
         
-        # 记录注入操作（在目标项目的记录目录中）
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # 记录注入操作（统一命名，覆盖旧文件）
         injection_record = {
-            "timestamp": timestamp,
+            "last_updated": datetime.now().isoformat(),
             "operation": "cursor_rules_injection",
             "target_project_path": project_path,
             "cursor_project_root": cursor_project_root,
@@ -224,7 +155,7 @@ def ios_setup_cursor_rules(
             "note": "Cursor规则文件已成功注入到指定的Cursor项目根目录"
         }
         
-        record_file = os.path.join(record_dir, f"cursor_injection_{timestamp}.json")
+        record_file = os.path.join(record_dir, "cursor_rules_injection.json")
         with open(record_file, 'w', encoding='utf-8') as f:
             json.dump(injection_record, f, indent=2, ensure_ascii=False)
         
@@ -272,68 +203,105 @@ def ios_update_progress(
         JSON格式的更新结果
     """
     try:
-        record_dir = os.path.join(project_path, '.record')
+        record_dir = _create_record_directory(project_path)
         progress_file = os.path.join(record_dir, "transformation_progress.json")
         
-        if not os.path.exists(progress_file):
-            return json.dumps({"error": "进度文件不存在，请先扫描项目"}, ensure_ascii=False)
+        # 读取现有进度
+        if os.path.exists(progress_file):
+            with open(progress_file, 'r', encoding='utf-8') as f:
+                progress_data = json.load(f)
+        else:
+            return json.dumps({"error": "进度文件不存在，请先运行项目扫描"}, ensure_ascii=False)
         
-        # 读取当前进度
-        with open(progress_file, 'r', encoding='utf-8') as f:
-            progress_data = json.load(f)
+        # 更新进度数据
+        timestamp = datetime.now().isoformat()
+        
+        # 验证文件是否存在于项目中
+        valid_files = []
+        invalid_files = []
+        for file_path in completed_files:
+            full_path = os.path.join(project_path, file_path)
+            if os.path.exists(full_path):
+                valid_files.append(file_path)
+            else:
+                invalid_files.append(file_path)
         
         # 更新进度统计
-        total_files = progress_data["project_info"]["total_files"]
-        completed_count = len(completed_files)
-        in_progress_count = 0  # 简化处理，不跟踪进行中状态
-        not_started_count = total_files - completed_count
+        total_files = progress_data.get("project_info", {}).get("total_files", 0)
+        completed_count = len(valid_files)
         
         progress_data["transformation_progress"] = {
-            "not_started": not_started_count,
-            "in_progress": in_progress_count,
-            "completed": completed_count
+            "completed": completed_count,
+            "not_started": max(0, total_files - completed_count),
+            "completion_rate": round(completed_count / total_files * 100, 2) if total_files > 0 else 0
         }
         
-        # 添加完成文件列表
-        progress_data["completed_files"] = completed_files
+        # 添加本次更新记录
+        if "update_history" not in progress_data:
+            progress_data["update_history"] = []
         
-        # 更新时间戳
-        progress_data["last_update"] = datetime.now().isoformat()
+        update_record = {
+            "timestamp": timestamp,
+            "completed_files": valid_files,
+            "notes": notes,
+            "invalid_files": invalid_files,
+            "session_stats": {
+                "files_updated": len(valid_files),
+                "total_completed": completed_count,
+                "completion_rate": progress_data["transformation_progress"]["completion_rate"]
+            }
+        }
+        
+        progress_data["update_history"].append(update_record)
+        progress_data["last_update"] = timestamp
         
         # 保存更新后的进度
         with open(progress_file, 'w', encoding='utf-8') as f:
             json.dump(progress_data, f, indent=2, ensure_ascii=False)
         
-        # 记录此次更新
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        update_record = {
-            "timestamp": timestamp,
-            "operation": "progress_update",
-            "completed_files": completed_files,
-            "completed_count": completed_count,
-            "total_files": total_files,
-            "completion_percentage": round((completed_count / total_files) * 100, 2) if total_files > 0 else 0,
-            "notes": notes
-        }
-        
-        update_record_file = os.path.join(record_dir, f"progress_update_{timestamp}.json")
-        with open(update_record_file, 'w', encoding='utf-8') as f:
-            json.dump(update_record, f, indent=2, ensure_ascii=False)
-        
+        # 生成统计报告
         result = {
             "success": True,
-            "completed_files": completed_files,
-            "completed_count": completed_count,
-            "total_files": total_files,
-            "completion_percentage": round((completed_count / total_files) * 100, 2) if total_files > 0 else 0,
-            "remaining_files": not_started_count,
-            "timestamp": datetime.now().isoformat(),
-            "record_file": update_record_file
+            "updated_at": timestamp,
+            "progress_summary": {
+                "total_files": total_files,
+                "completed_files": completed_count,
+                "completion_rate": f"{progress_data['transformation_progress']['completion_rate']}%",
+                "remaining_files": total_files - completed_count
+            },
+            "this_session": {
+                "files_processed": valid_files,
+                "invalid_files": invalid_files,
+                "notes": notes
+            },
+            "next_recommendations": _get_next_recommendations(progress_data, project_path)
         }
         
         return json.dumps(result, indent=2, ensure_ascii=False)
+        
     except Exception as e:
-        return json.dumps({"error": str(e)}, ensure_ascii=False)
+        return json.dumps({"error": f"更新进度失败: {str(e)}"}, ensure_ascii=False)
+
+def _get_next_recommendations(progress_data: Dict, project_path: str) -> List[str]:
+    """获取下一步推荐操作"""
+    recommendations = []
+    
+    completion_rate = progress_data.get("transformation_progress", {}).get("completion_rate", 0)
+    
+    if completion_rate < 25:
+        recommendations.append("建议优先处理低复杂度文件以快速提升进度")
+        recommendations.append("使用 ios_generate_cursor_instructions 获取具体改造指令")
+    elif completion_rate < 50:
+        recommendations.append("可以开始处理中等复杂度的文件")
+        recommendations.append("注意保持代码风格一致性")
+    elif completion_rate < 75:
+        recommendations.append("开始处理高复杂度文件，建议使用Extension策略")
+        recommendations.append("定期验证改造质量")
+    else:
+        recommendations.append("接近完成，建议进行最终质量检查")
+        recommendations.append("验证所有新代码都被有效调用")
+    
+    return recommendations
 
 @mcp.tool()
 def ios_get_progress_statistics(
@@ -361,14 +329,27 @@ def ios_get_progress_statistics(
         
         # 计算统计信息
         total_files = progress_data["project_info"]["total_files"]
-        completed_count = progress_data["transformation_progress"]["completed"]
+        completed_data = progress_data["transformation_progress"]["completed"]
+        
+        # 处理不同的数据格式
+        if isinstance(completed_data, list):
+            completed_count = len(completed_data)
+            completed_files = completed_data
+        else:
+            completed_count = completed_data if isinstance(completed_data, int) else 0
+            # 从历史记录中获取文件列表
+            completed_files = []
+            if progress_data.get("update_history"):
+                latest_update = progress_data["update_history"][-1]
+                completed_files = latest_update.get("completed_files", [])
+        
         completion_percentage = round((completed_count / total_files) * 100, 2) if total_files > 0 else 0
         
         statistics = {
             "project_overview": progress_data["project_info"],
             "overall_progress": progress_data["transformation_progress"],
             "completion_percentage": completion_percentage,
-            "completed_files": progress_data.get("completed_files", []),
+            "completed_files": completed_files,
             "remaining_files": total_files - completed_count,
             "last_update": progress_data.get("last_update", "未更新")
         }
@@ -383,133 +364,22 @@ def ios_analyze_file(
     file_content: str
 ) -> str:
     """
-    分析单个iOS代码文件的特征和详细信息
+    分析单个iOS代码文件的基本信息
     
     Args:
         file_path: 文件路径
         file_content: 文件内容
     
     Returns:
-        JSON格式的详细文件分析结果
+        JSON格式的文件分析结果
     """
     try:
         analysis = file_analyzer.analyze_file(file_path, file_content)
-        
-        # 计算复杂度
-        complexity = _calculate_complexity(file_content)
-        
-        # 详细分析类和方法
-        detailed_info = _analyze_code_structure(file_content)
-        
-        result = {
-            "file_path": file_path,
-            "complexity": complexity,
-            "basic_analysis": analysis,
-            "detailed_structure": detailed_info,
-            "enhancement_suggestions": _generate_enhancement_suggestions(analysis, complexity),
-            "analysis_timestamp": datetime.now().isoformat()
-        }
-        
-        return json.dumps(result, indent=2, ensure_ascii=False)
+        return json.dumps(analysis, indent=2, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
-def _analyze_code_structure(content: str) -> Dict[str, Any]:
-    """详细分析代码结构"""
-    lines = content.split('\n')
-    
-    structure = {
-        "total_lines": len(lines),
-        "non_empty_lines": len([line for line in lines if line.strip()]),
-        "comment_lines": len([line for line in lines if line.strip().startswith('//')]),
-        "classes_detail": [],
-        "methods_detail": [],
-        "properties_detail": [],
-        "imports_detail": []
-    }
-    
-    # 分析导入语句
-    for i, line in enumerate(lines):
-        if line.strip().startswith('import '):
-            structure["imports_detail"].append({
-                "line_number": i + 1,
-                "import_statement": line.strip(),
-                "framework": line.strip().replace('import ', '')
-            })
-    
-    # 分析类定义
-    for i, line in enumerate(lines):
-        if 'class ' in line and not line.strip().startswith('//'):
-            class_name = line.split('class ')[1].split(':')[0].split('{')[0].strip()
-            structure["classes_detail"].append({
-                "line_number": i + 1,
-                "class_name": class_name,
-                "full_declaration": line.strip()
-            })
-    
-    # 分析方法定义
-    for i, line in enumerate(lines):
-        if 'func ' in line and not line.strip().startswith('//'):
-            method_name = line.split('func ')[1].split('(')[0].strip()
-            structure["methods_detail"].append({
-                "line_number": i + 1,
-                "method_name": method_name,
-                "full_declaration": line.strip()
-            })
-    
-    # 分析属性定义
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if (stripped.startswith('var ') or stripped.startswith('let ')) and not stripped.startswith('//'):
-            prop_name = stripped.split(' ')[1].split(':')[0].split('=')[0].strip()
-            structure["properties_detail"].append({
-                "line_number": i + 1,
-                "property_name": prop_name,
-                "property_type": "var" if stripped.startswith('var ') else "let",
-                "full_declaration": stripped
-            })
-    
-    return structure
 
-def _calculate_complexity(content: str) -> str:
-    """计算代码复杂度"""
-    lines = len(content.split('\n'))
-    classes = content.count('class ')
-    functions = content.count('func ')
-    
-    if lines > 500 or classes > 5 or functions > 20:
-        return "high"
-    elif lines > 200 or classes > 2 or functions > 10:
-        return "medium"
-    return "low"
-
-def _generate_enhancement_suggestions(analysis: Dict[str, Any], complexity: str) -> List[str]:
-    """生成增强建议"""
-    suggestions = []
-    
-    # 核心原则
-    suggestions.append("确保不改变原有代码的功能逻辑")
-    suggestions.append("重点在于丰富和增强现有代码")
-    
-    # 根据复杂度给出建议
-    if complexity == "high":
-        suggestions.append("建议通过Extension方式扩展功能")
-        suggestions.append("分模块逐步丰富，避免一次性大改动")
-    else:
-        suggestions.append("可以直接在类中添加相关功能方法")
-        suggestions.append("适合添加更多的属性和计算方法")
-    
-    # 技术栈建议
-    if not analysis.get('has_uikit', False):
-        suggestions.append("可以适当引入UIKit相关功能")
-    if not analysis.get('has_gcd', False):
-        suggestions.append("可以添加GCD多线程处理功能")
-    if not analysis.get('has_foundation', False):
-        suggestions.append("可以利用Foundation框架功能")
-    
-    suggestions.append("使用不同的设计模式保持代码多样性")
-    
-    return suggestions
 
 @mcp.tool()
 def ios_generate_cursor_instructions(
@@ -517,48 +387,47 @@ def ios_generate_cursor_instructions(
     strategy: str = "flexible"
 ) -> str:
     """
-    为特定文件生成Cursor改造指令
+    为特定文件生成简单的Cursor改造指令
     
     Args:
         file_path: 要改造的文件路径
-        strategy: 改造策略 (flexible/direct/extension)
+        strategy: 改造策略 (flexible/progressive/extension)
     
     Returns:
         JSON格式的Cursor指令
     """
     try:
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            return json.dumps({"error": f"文件不存在: {file_path}"}, ensure_ascii=False)
+        
+        # 读取并分析文件
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        analysis = file_analyzer.analyze_file(file_path, content)
+        
+        # 生成简单指令
         instructions = {
-            "file_path": file_path,
-            "strategy": strategy,
-            "cursor_commands": [
-                f"分析 {file_path} 的现有代码结构",
-                "使用 @iOS_Code_Rules.mdc 了解改造规范",
-                "使用 @creater_new_code_file.mdc 指导功能增强"
-            ],
-            "step_by_step_instructions": [
-                f"仔细分析 {file_path} 的现有功能和结构",
-                "识别可以丰富和增强的功能点",
-                "根据@iOS_Code_Rules.mdc选择合适的改造方式",
-                "适当添加相关功能方法或属性",
-                "确保新增功能与原有代码和谐集成",
-                "验证原有功能完全不受影响",
-                "调用 ios_update_progress 更新改造状态"
-            ],
-            "cursor_usage": [
-                "在Cursor中使用 @文件名.mdc 来引用规则文件",
-                "利用Cursor的智能分析来理解代码结构",
-                "使用Cursor验证改造后的代码质量",
-                "让Cursor协助生成符合规范的代码"
-            ],
-            "progress_tracking": [
-                "完成改造后调用 ios_update_progress 更新项目进度",
-                "传入已完成的文件列表更新整体统计"
-            ]
+            "step_1": "分析文件结构，识别可以安全插入新代码的位置",
+            "step_2": "设计辅助功能，包含UIKit、Foundation、GCD使用",
+            "step_3": "在合适位置插入新代码调用，不破坏原有逻辑",
+            "step_4": "验证新代码被100%调用且编译正常"
         }
         
-        return json.dumps(instructions, indent=2, ensure_ascii=False)
+        result = {
+            "file_path": file_path,
+            "analysis": analysis,
+            "strategy": strategy,
+            "cursor_instructions": instructions
+        }
+        
+        return json.dumps(result, indent=2, ensure_ascii=False)
+        
     except Exception as e:
-        return json.dumps({"error": str(e)}, ensure_ascii=False)
+        return json.dumps({"error": f"生成指令失败: {str(e)}"}, ensure_ascii=False)
+
+
 
 def _create_record_directory(project_path: str) -> str:
     """创建记录目录"""
@@ -574,10 +443,10 @@ def _create_record_directory(project_path: str) -> str:
 
 ## 文件类型说明
 
-- `scan_result_*.json` - 项目扫描结果记录
+- `latest_scan_result.json` - 最新项目扫描结果记录
 - `transformation_progress.json` - 改造进度跟踪文件
-- `cursor_injection_*.json` - Cursor规则注入记录
-- `progress_update_*.json` - 进度更新记录
+- `cursor_rules_injection.json` - Cursor规则注入记录
+- `README.md` - 本说明文件
 
 ## MCP工具功能
 
@@ -725,9 +594,67 @@ ios_get_progress_statistics(project_path)
     
     return content
 
+@mcp.tool()
+def ios_evaluate_project_quality(
+    project_path: str
+) -> str:
+    """
+    简单的项目质量评估
+    
+    Args:
+        project_path: 项目根目录路径
+    
+    Returns:
+        JSON格式的质量评估报告
+    """
+    try:
+        record_dir = os.path.join(project_path, '.record')
+        progress_file = os.path.join(record_dir, "transformation_progress.json")
+        
+        if not os.path.exists(progress_file):
+            return json.dumps({"error": "进度文件不存在，请先扫描项目"}, ensure_ascii=False)
+        
+        with open(progress_file, 'r', encoding='utf-8') as f:
+            progress_data = json.load(f)
+        
+        # 简单的质量评估
+        total_files = progress_data["project_info"]["total_files"]
+        completed_data = progress_data["transformation_progress"].get("completed", [])
+        
+        # 处理两种数据格式：数组或数字
+        if isinstance(completed_data, list):
+            completed_files = len(completed_data)
+        else:
+            completed_files = completed_data if isinstance(completed_data, int) else 0
+            
+        completion_rate = round((completed_files / total_files) * 100, 2) if total_files > 0 else 0
+        
+        result = {
+            "evaluation_timestamp": datetime.now().isoformat(),
+            "project_overview": {
+                "total_files": total_files,
+                "completed_files": completed_files,
+                "completion_rate": f"{completion_rate}%"
+            },
+            "quality_status": "优秀" if completion_rate >= 80 else "良好" if completion_rate >= 50 else "需要改进",
+            "recommendations": [
+                "继续完成剩余文件的改造" if completion_rate < 100 else "项目改造已完成",
+                "定期检查代码质量",
+                "确保新代码被正确调用"
+            ]
+        }
+        
+        return json.dumps(result, indent=2, ensure_ascii=False)
+        
+    except Exception as e:
+        return json.dumps({"error": f"质量评估失败: {str(e)}"}, ensure_ascii=False)
+
+
+
 def main():
     """主函数"""
     mcp.run()
 
 if __name__ == "__main__":
-    main() 
+    main()
+

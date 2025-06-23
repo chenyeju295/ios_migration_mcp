@@ -9,10 +9,23 @@ alwaysApply: false
 
 ### 前置步骤
 在开始改造前，请先使用MCP工具进行项目分析：
-1. 使用 `ios_scan_project` 扫描项目结构
-2. 使用 `ios_generate_plan` 生成改造计划
-3. 使用 `ios_setup_cursor_rules` 设置项目规则
-4. 使用 `ios_generate_cursor_instructions` 获取具体指令
+1. 使用 `ios_scan_project` 扫描项目结构，生成 `latest_scan_result.json`
+2. 使用 `ios_setup_cursor_rules` 注入项目规则到 `.cursor/rules` 目录
+3. 使用 `ios_analyze_file` 分析目标文件基本信息
+4. 使用 `ios_generate_cursor_instructions` 获取具体改造指令
+
+### 进度跟踪
+改造过程中使用以下工具跟踪进度：
+- `ios_update_progress` - 更新改造进度到 `transformation_progress.json`
+- `ios_get_progress_statistics` - 获取整体统计信息
+- `ios_evaluate_project_quality` - 评估项目改造质量
+
+### 统一文件管理
+MCP工具现在使用统一命名的记录文件，避免生成过多时间戳文件：
+- `latest_scan_result.json` - 最新的项目扫描结果
+- `transformation_progress.json` - 改造进度跟踪文件
+- `cursor_rules_injection.json` - Cursor规则注入记录
+- `README.md` - 记录文件夹说明
 
 ## 核心改造策略
 
@@ -101,10 +114,10 @@ alwaysApply: false
 在改造 [文件名] 时，请基于以下MCP分析结果：
 
 项目信息：
-- 主要语言：[从MCP获取]
-- 文件复杂度：[从MCP获取]
-- 推荐策略：[从MCP获取]
-- 风险评估：[从MCP获取]
+- 总文件数：[从 ios_scan_project 获取]
+- 文件大小：[从 ios_analyze_file 获取：small/medium/large]
+- 敏感内容检测：[从 ios_analyze_file 获取]
+- 改造准备状态：[从 ios_analyze_file 获取]
 
 改造要求：
 @iOS_Code_Rules.mdc
@@ -112,6 +125,9 @@ alwaysApply: false
 - 禁止支付、WebView、JavaScript等敏感功能
 - 确保新代码100%被调用
 - 保持代码风格一致
+
+改造完成后调用：
+ios_update_progress(project_path, [完成的文件列表], "改造完成备注")
 
 请基于这些约束进行智能改造。
 ```
@@ -398,11 +414,116 @@ func originalMethod() {
 - [ ] 命名规范符合iOS开发标准
 - [ ] 包含适当的错误处理机制
 
+## 简化MCP工具集成指南
+
+### 6个核心MCP工具功能
+简化后的MCP工具提供以下6个核心功能：
+
+#### 1. 项目分析工具
+- `ios_scan_project(project_path, include_tests=False)` - 扫描项目，生成文件清单
+  - 返回：文件列表、敏感内容检测、改造准备状态
+  - 输出文件：`latest_scan_result.json`
+
+#### 2. 规则注入工具
+- `ios_setup_cursor_rules(project_path, cursor_project_root)` - 注入Cursor规则
+  - 功能：自动注入3个规则文件到 `.cursor/rules` 目录
+  - 输出文件：`cursor_rules_injection.json`
+
+#### 3. 文件分析工具
+- `ios_analyze_file(file_path, file_content)` - 分析单个文件
+  - 返回：文件大小、敏感内容、改造建议
+
+#### 4. 指令生成工具
+- `ios_generate_cursor_instructions(file_path, strategy="flexible")` - 生成改造指令
+  - 策略选项：flexible（灵活）、progressive（渐进）、extension（扩展）
+
+#### 5. 进度管理工具
+- `ios_update_progress(project_path, completed_files, notes)` - 更新改造进度
+  - 功能：记录完成的文件、验证文件存在性、计算完成率
+  - 输出文件：更新 `transformation_progress.json`
+
+#### 6. 统计查看工具
+- `ios_get_progress_statistics(project_path)` - 获取进度统计
+- `ios_evaluate_project_quality(project_path)` - 评估项目质量
+
+### 标准工作流程
+
+#### 初始化阶段
+```
+1. ios_scan_project("/path/to/ios/project")
+   -> 生成文件清单和基本分析
+
+2. ios_setup_cursor_rules("/path/to/ios/project", "/path/to/cursor/root")
+   -> 注入规则文件到Cursor
+
+3. 在Cursor中引用：@iOS_Code_Rules.mdc @creater_new_code_file.mdc
+```
+
+#### 改造执行阶段
+```
+对每个文件：
+1. ios_analyze_file(file_path, content) -> 获取文件基本信息
+2. ios_generate_cursor_instructions(file_path) -> 获取改造指令
+3. 在Cursor中执行改造（遵循指令）
+4. ios_update_progress(project_path, [file_path], "完成改造") -> 更新进度
+```
+
+#### 质量验证阶段
+```
+1. ios_get_progress_statistics(project_path) -> 查看整体进度
+2. ios_evaluate_project_quality(project_path) -> 评估改造质量
+```
+
+### 统一文件管理优势
+
+简化后的MCP工具采用统一文件命名，避免文件累积：
+
+#### 记录文件结构
+```
+project/.record/
+├── latest_scan_result.json      # 最新扫描结果（覆盖更新）
+├── transformation_progress.json # 进度跟踪（增量更新）
+├── cursor_rules_injection.json  # 规则注入记录（覆盖更新）
+└── README.md                    # 说明文件
+```
+
+#### 好处
+- **文件简洁**: 不再生成大量时间戳文件
+- **易于管理**: 固定4个文件，结构清晰
+- **快速定位**: 直接找到最新信息
+- **版本控制友好**: 减少不必要的文件变更
+
+### Cursor使用最佳实践
+
+#### 引用规则文件的标准模板
+```
+@iOS_Code_Rules.mdc
+@creater_new_code_file.mdc 
+@cursor_optimization_strategies.mdc
+
+基于MCP工具分析结果改造文件：[文件名]
+
+MCP分析结果：
+- 文件大小：[从 ios_analyze_file 获取]
+- 敏感内容：[检测结果]
+- 推荐策略：[改造策略]
+
+改造要求：
+1. 严格遵循代码占比要求（30-50%）
+2. 确保100%新代码被调用
+3. 包含必需技术栈：UIKit + Foundation + GCD
+4. 禁止敏感功能实现
+
+改造完成后调用：
+ios_update_progress(project_path, ["文件名"], "改造完成备注")
+```
+
 ## 使用说明
 
-1. **配合MCP工具**: 始终先使用MCP工具分析项目和生成计划
+1. **配合MCP工具**: 始终先使用MCP工具分析项目和获取指令
 2. **引用规则文件**: 在Cursor中使用 `@iOS_Code_Rules.mdc` 确保合规性
-3. **分阶段实施**: 按照MCP生成的计划分阶段进行改造
-4. **持续验证**: 每完成一个文件就使用MCP工具验证结果
+3. **分阶段实施**: 按照MCP工具的建议分阶段进行改造
+4. **持续跟踪**: 每完成一个文件就使用MCP工具更新进度
+5. **统一管理**: 利用简化的文件结构保持项目整洁
 
-通过这种方式，Cursor AI能够更准确地理解改造要求，生成高质量的iOS代码改造结果。
+通过这种简化的工作流程，Cursor AI能够更高效地与MCP工具配合，生成高质量的iOS代码改造结果。

@@ -1,80 +1,52 @@
 """
-文件分析器
-负责分析单个iOS代码文件的特征
+简化的文件分析器
+只提供基本的文件信息，用于项目改造跟踪
 """
 
 import os
-import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 
 class FileAnalyzer:
-    """文件分析器类"""
+    """简化的文件分析器 - 只提供基本文件信息"""
     
-    def analyze_file(self, file_path: str, theme: str) -> Optional[Dict[str, Any]]:
-        """分析文件特征"""
-        if file_path.endswith('.swift'):
-            return self._analyze_swift_file(file_path, theme)
-        elif file_path.endswith(('.m', '.h', '.mm')):
-            return self._analyze_objc_file(file_path, theme)
-        else:
-            return None
+    # 敏感关键词检测
+    SENSITIVE_KEYWORDS = [
+        'payment', 'purchase', 'webview', 'javascript', 'js', 'pay', 'in-app'
+    ]
     
-    def _analyze_swift_file(self, file_path: str, theme: str) -> Dict[str, Any]:
-        """分析Swift文件"""
+    def analyze_file(self, file_path: str, content: str) -> Dict[str, Any]:
+        """
+        简化的文件分析 - 只返回基本信息
+        """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            lines = content.split('\n')
+            line_count = len(lines)
             
-            relative_path = os.path.relpath(file_path)
+            # 检测敏感关键词
+            has_sensitive = self._check_sensitive_keywords(content.lower())
             
-            return {
-                'path': relative_path,
-                'full_path': file_path,
-                'type': 'swift',
-                'line_count': len(content.split('\n')),
-                'class_count': len(re.findall(r'class\s+\w+', content)),
-                'method_count': len(re.findall(r'func\s+\w+', content)),
-                'complexity': 'medium',
-                'theme_relevance': 'medium',
-                'transformation_potential': 'high',
-                'risk_level': 'low'
+            # 基本文件信息
+            result = {
+                'path': os.path.relpath(file_path),
+                'line_count': line_count,
+                'has_sensitive_content': has_sensitive,
+                'file_size': 'small' if line_count < 100 else 'medium' if line_count < 300 else 'large',
+                'ready_for_transformation': not has_sensitive
             }
+            
+            return result
+            
         except Exception as e:
-            return {'path': file_path, 'error': str(e)}
-    
-    def _analyze_objc_file(self, file_path: str, theme: str) -> Dict[str, Any]:
-        """分析Objective-C文件"""
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            relative_path = os.path.relpath(file_path)
-            
             return {
-                'path': relative_path,
-                'full_path': file_path,
-                'type': 'objc',
-                'line_count': len(content.split('\n')),
-                'class_count': len(re.findall(r'@interface\s+\w+', content)),
-                'method_count': len(re.findall(r'[-+]\s*\(', content)),
-                'complexity': 'medium',
-                'theme_relevance': 'medium',
-                'transformation_potential': 'high',
-                'risk_level': 'low'
+                'path': os.path.relpath(file_path) if file_path else 'unknown',
+                'line_count': 0,
+                'has_sensitive_content': True,
+                'file_size': 'unknown',
+                'ready_for_transformation': False,
+                'error': str(e)
             }
-        except Exception as e:
-            return {'path': file_path, 'error': str(e)}
     
-    def analyze_code_structure(self, content: str) -> Dict[str, Any]:
-        """分析代码结构"""
-        return {
-            "classes": re.findall(r'class\s+(\w+)', content),
-            "methods": re.findall(r'func\s+(\w+)', content),
-            "properties": re.findall(r'(?:var|let)\s+(\w+)', content),
-            "imports": re.findall(r'import\s+(\w+)', content),
-            "line_count": len(content.split('\n')),
-            "has_uikit": 'UIKit' in content,
-            "has_foundation": 'Foundation' in content,
-            "has_gcd": 'DispatchQueue' in content
-        } 
+    def _check_sensitive_keywords(self, content: str) -> bool:
+        """检查是否包含敏感关键词"""
+        return any(keyword in content for keyword in self.SENSITIVE_KEYWORDS)
