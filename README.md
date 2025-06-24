@@ -1,4 +1,5 @@
 # iOS 代码迁移优化工具 - Cursorrules
+[![smithery badge](https://smithery.ai/badge/@chenyeju295/ios_migration_mcp)](https://smithery.ai/server/@chenyeju295/ios_migration_mcp)
 
 ## 项目简介
 
@@ -16,6 +17,14 @@
 ## MCP工具使用
 
 ### 安装和配置
+
+### Installing via Smithery
+
+To install iOS Code Migration Optimization Tool for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@chenyeju295/ios_migration_mcp):
+
+```bash
+npx -y @smithery/cli install @chenyeju295/ios_migration_mcp --client claude
+```
 
 1. **MCP环境**
 
