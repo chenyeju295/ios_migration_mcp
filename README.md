@@ -17,9 +17,11 @@
 
 ### 安装和配置
 
-1. **安装MCP工具**
 
-#### 安装python、uv
+
+
+1. MCP环境
+** 安装python、uv **
 
 - Python 环境 3.10+
 - 下载地址： https://www.python.org/downloads/
@@ -30,7 +32,6 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 uv --version
 ```
-
 ```bash
 cd ios_migration_mcp
 pip install -r requirements.txt
