@@ -18,6 +18,19 @@
 ### 安装和配置
 
 1. **安装MCP工具**
+
+#### 安装python、uv
+
+- Python 环境 3.10+
+- 下载地址： https://www.python.org/downloads/
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+uv --version
+```
+
 ```bash
 cd ios_migration_mcp
 pip install -r requirements.txt
