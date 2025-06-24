@@ -21,7 +21,7 @@
 ```bash
 cd ios_migration_mcp
 pip install -r requirements.txt
-python main.py
+uv run --with fastmcp fastmcp dev ./main.py
 ```
 
 2. **配置Cursor MCP**
@@ -29,10 +29,16 @@ python main.py
 ```json
 {
   "mcpServers": {
-    "ios-migration-analyzer": {
-      "command": "python",
-      "args": ["/path/to/cursorrules/ios_migration_mcp/main.py"],
-      "env": {}
+    "ios_migration_mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "fastmcp",
+        "fastmcp",
+        "run",
+        "/Users/chenyeju/Documents/cursorrules/ios_migration_mcp/main.py"
+      ]
     }
   }
 }
@@ -41,18 +47,44 @@ python main.py
 ### 完整工作流程
 
 #### 步骤1: 项目初始化
-```bash
-# 扫描iOS项目
-ios_scan_project('/path/to/your/ios/project')
 
-# 为项目设置Cursor Rules
-ios_setup_cursor_rules('/path/to/your/ios/project')
+### 1️⃣ 项目初始化
+```
+请使用MCP工具扫描我的iOS项目：
+目标目录：/Users/chenyeju/Documents/***
+主题：******
+请按照以下步骤执行：
+1. 使用 ios_scan_project 扫描 project_path：/Users/chenyeju/Documents/***
+2. 使用 ios_setup_cursor_rules 注入Cursor规则文件
+3. 分析扫描结果，给出改造建议
+
+开始执行MCP工具调用。
+```
+ ### 2️⃣ 开始改造文件
+```
+@creater_new_code_file.mdc @iOS_Code_Rules.mdc 
+
+请改造这个iOS文件：[文件名.swift]
+
+要求：
+1. 生成1-2个新辅助类，同目录下
+2. 可包含UIKit、Foundation、GCD技术栈
+3. 在原文件中调用新代码，100%被调用
+4. 新代码占比30%-50%
+5. 保持原功能不变
+6. 禁用敏感功能
+
+完成后提供代码统计。
 ```
 
-#### 步骤2: 生成改造计划
-```bash
-# 基于扫描结果生成详细改造计划
-ios_generate_plan(scan_results, 'safety')
+### 3️⃣ 更新进度
+```
+请使用MCP工具更新改造进度：
+
+completed_files: ["刚完成的文件.swift"]
+notes: "完成XX文件改造，新增XX功能"
+
+然后显示总体进度统计。
 ```
 
 #### 步骤3: 执行改造
