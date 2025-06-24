@@ -17,28 +17,29 @@
 
 ### 安装和配置
 
+1. **MCP环境**
 
-
-
-1. MCP环境
-** 安装python、uv **
-
-- Python 环境 3.10+
+- 安装python 3.10+ 
 - 下载地址： https://www.python.org/downloads/
 
+- 安装uv
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 uv --version
 ```
+
+
+2. **配置Cursor MCP**
+
+运行命令检查环境
 ```bash
 cd ios_migration_mcp
 pip install -r requirements.txt
 uv run --with fastmcp fastmcp dev ./main.py
 ```
 
-2. **配置Cursor MCP**
 在Cursor的MCP设置中添加：
 ```json
 {
