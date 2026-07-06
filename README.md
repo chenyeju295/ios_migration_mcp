@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/chenyeju295-ios-migration-mcp-badge.png)](https://mseep.ai/app/chenyeju295-ios-migration-mcp)
+
 # iOS 代码迁移优化工具 - Cursorrules
 [![smithery badge](https://smithery.ai/badge/@chenyeju295/ios_migration_mcp)](https://smithery.ai/server/@chenyeju295/ios_migration_mcp)
 
